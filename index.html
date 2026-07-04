@@ -6,121 +6,274 @@
 <title>Ivy & Ace's Game Portal</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-body{
-  font-family:Arial,Helvetica,sans-serif;
-  background:linear-gradient(180deg,#7fd8ff,#fff8d7);
-  min-height:100vh;
+:root {
+  --sky: #78d9ff;
+  --cream: #fff7cf;
+  --ink: #243044;
+  --soft: rgba(255,255,255,.82);
+  --shadow: 0 18px 45px rgba(28,43,74,.18);
+  --ivy: #ff5fb7;
+  --ace: #2f80ed;
+  --frogger: #22a35a;
+  --space: #6d28d9;
+  --orange: #ff9f1c;
 }
 
-header{text-align:center;padding:35px 20px;}
-h1{font-size:3rem;color:#2d3748;}
-.subtitle{margin-top:8px;font-size:1.2rem;color:#555;}
-
-.games{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:28px;
-  max-width:1200px;
-  margin:20px auto 60px;
-  padding:20px;
+body {
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 15% 15%, rgba(255,255,255,.65), transparent 22%),
+    radial-gradient(circle at 85% 10%, rgba(255,255,255,.55), transparent 20%),
+    linear-gradient(180deg, var(--sky), var(--cream));
+  overflow-x: hidden;
 }
 
-.card{
-  background:white;
-  border-radius:24px;
-  padding:25px;
-  box-shadow:0 12px 30px rgba(0,0,0,.15);
-  transition:.25s;
-  text-align:center;
+body::before {
+  content: "⭐ 🎮 🚀 🐸 🏓 👗 ⭐";
+  position: fixed;
+  top: 14px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 22px;
+  opacity: .22;
+  pointer-events: none;
 }
 
-.card:hover{transform:translateY(-8px);}
-.icon{font-size:64px;}
-h2{margin:15px 0 10px;}
-p{color:#555;min-height:48px;}
-
-.button{
-  display:inline-block;
-  margin-top:20px;
-  padding:14px 28px;
-  border-radius:18px;
-  text-decoration:none;
-  color:white;
-  font-weight:bold;
-  font-size:20px;
+header {
+  text-align: center;
+  padding: 48px 18px 20px;
 }
 
-.ivy{background:#ff69b4;}
-.ace{background:#3b82f6;}
-.space{background:#6d28d9;}
-
-.locked{
-  background:#efefef;
-  color:#888;
-  border:3px dashed #bbb;
+.logo {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.55);
+  box-shadow: 0 8px 22px rgba(0,0,0,.08);
+  font-weight: bold;
+  margin-bottom: 18px;
 }
 
-.locked .button{background:#aaa;}
-
-.badge{
-  display:inline-block;
-  background:#FFD54F;
-  color:#333;
-  padding:5px 12px;
-  border-radius:999px;
-  font-weight:bold;
-  margin-bottom:10px;
+h1 {
+  font-size: clamp(2.1rem, 6vw, 4.2rem);
+  line-height: 1.05;
+  text-shadow: 0 3px 0 rgba(255,255,255,.65);
 }
 
-footer{
-  text-align:center;
-  color:#666;
-  padding:30px;
-  font-size:20px;
+.subtitle {
+  margin: 14px auto 0;
+  max-width: 700px;
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  color: #4c5b72;
 }
 
-/* Hidden Papa counter */
-#papaDot{
-  position:fixed;
-  right:12px;
-  bottom:12px;
-  font-size:18px;
-  color:#39c76f;
-  text-decoration:none;
-  opacity:.45;
-  z-index:9999;
+.top-row {
+  max-width: 1120px;
+  margin: 22px auto 0;
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 16px;
 }
 
-#papaDot:hover{opacity:1;}
-
-#papaPanel{
-  display:none;
-  position:fixed;
-  right:20px;
-  bottom:45px;
-  width:300px;
-  background:white;
-  border-radius:18px;
-  padding:20px;
-  box-shadow:0 10px 35px rgba(0,0,0,.25);
-  z-index:9998;
-  text-align:left;
-  font-family:Arial,sans-serif;
+.pill {
+  background: rgba(255,255,255,.65);
+  border: 2px solid rgba(255,255,255,.75);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: bold;
+  box-shadow: 0 8px 22px rgba(0,0,0,.08);
 }
 
-#papaPanel h2{margin-bottom:12px;}
-#papaPanel p{min-height:0;margin:8px 0;}
+.games {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+  gap: 24px;
+  max-width: 1180px;
+  margin: 26px auto 48px;
+  padding: 18px;
+}
 
-#papaPanel button{
-  margin-top:12px;
-  padding:10px 16px;
-  border:0;
-  border-radius:10px;
-  background:#333;
-  color:white;
-  cursor:pointer;
+.card {
+  position: relative;
+  min-height: 310px;
+  border-radius: 30px;
+  padding: 22px;
+  text-align: center;
+  background: var(--soft);
+  border: 4px solid rgba(255,255,255,.75);
+  box-shadow: var(--shadow);
+  transition: transform .2s ease, box-shadow .2s ease;
+  overflow: hidden;
+}
+
+.card::after {
+  content: "";
+  position: absolute;
+  inset: auto -40px -55px auto;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.42);
+}
+
+.card:hover {
+  transform: translateY(-8px) scale(1.015);
+  box-shadow: 0 22px 55px rgba(28,43,74,.24);
+}
+
+.badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #ffd84d;
+  color: #3c3100;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 900;
+  box-shadow: 0 5px 12px rgba(0,0,0,.12);
+}
+
+.icon {
+  font-size: 68px;
+  margin-top: 12px;
+  filter: drop-shadow(0 5px 0 rgba(0,0,0,.07));
+}
+
+.card h2 {
+  margin: 18px 0 10px;
+  font-size: 1.45rem;
+}
+
+.card p {
+  color: #526073;
+  line-height: 1.35;
+  min-height: 58px;
+}
+
+.button {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  margin-top: 20px;
+  padding: 14px 26px;
+  min-width: 140px;
+  border-radius: 18px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: inset 0 -5px 0 rgba(0,0,0,.17), 0 8px 16px rgba(0,0,0,.16);
+  transition: transform .15s ease;
+}
+
+.button:hover { transform: translateY(-2px); }
+
+.ivy { background: var(--ivy); }
+.ace { background: var(--ace); }
+.frogger { background: var(--frogger); }
+.space { background: var(--space); }
+.orange { background: var(--orange); }
+
+.locked {
+  background: rgba(241,241,241,.82);
+  color: #808080;
+  border: 4px dashed rgba(120,120,120,.35);
+}
+
+.locked .icon { opacity: .72; }
+
+.locked .button {
+  background: #aaa;
+  cursor: default;
+  box-shadow: inset 0 -5px 0 rgba(0,0,0,.13);
+}
+
+footer {
+  text-align: center;
+  padding: 18px 18px 50px;
+  color: #536277;
+  font-size: 1.18rem;
+  font-weight: bold;
+}
+
+/* Hidden Papa dashboard */
+#papaDot {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 9999;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: block;
+  background: #37c96f;
+  opacity: .42;
+  box-shadow: 0 0 0 5px rgba(55,201,111,.12);
+}
+
+#papaDot:hover { opacity: 1; }
+
+#papaPanel {
+  display: none;
+  position: fixed;
+  right: 18px;
+  bottom: 42px;
+  z-index: 9998;
+  width: min(380px, calc(100vw - 36px));
+  max-height: calc(100vh - 70px);
+  overflow: auto;
+  background: white;
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 18px 55px rgba(0,0,0,.30);
+  text-align: left;
+}
+
+#papaPanel h2 { margin-bottom: 10px; }
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.stat strong { text-align: right; }
+
+.small-note {
+  margin-top: 12px;
+  color: #777;
+  font-size: .86rem;
+  line-height: 1.35;
+}
+
+.closeBtn, .resetBtn {
+  margin-top: 14px;
+  margin-right: 8px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  background: #293548;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.resetBtn { background: #a94442; }
+
+@media (max-width: 620px) {
+  header { padding-top: 34px; }
+  .games { grid-template-columns: 1fr; padding: 14px; }
+  .card { min-height: 285px; }
 }
 </style>
 </head>
@@ -128,110 +281,206 @@ footer{
 <body>
 
 <header>
+  <div class="logo">🌈 Ivy & Ace Clubhouse</div>
   <h1>🎮 Ivy & Ace's Game Portal 🎮</h1>
   <div class="subtitle">
     New games from <strong>Papa</strong> will appear here as surprises ❤️
   </div>
+
+  <div class="top-row">
+    <div class="pill">4 games ready</div>
+    <div class="pill">More surprises soon</div>
+    <div class="pill">Have fun!</div>
+  </div>
 </header>
 
-<div class="games">
+<main class="games">
 
-  <div class="card">
+  <section class="card">
     <div class="icon">👗✨</div>
     <h2>Ivy's Dress to Impress</h2>
     <p>Create amazing outfits and impress the judges.</p>
-    <a class="button ivy" href="ivy-dress-to-impress.html">Play</a>
-  </div>
+    <a class="button ivy game-link" data-game="Ivy Dress to Impress" href="ivy-dress-to-impress.html">Play</a>
+  </section>
 
-  <div class="card">
+  <section class="card">
     <div class="icon">🏓</div>
     <h2>Ace's Paddle Rally</h2>
-    <p>Can you beat the computer?</p>
-    <a class="button ace" href="ace-paddle-rally.html">Play</a>
-  </div>
+    <p>Can you beat the computer and clear the levels?</p>
+    <a class="button ace game-link" data-game="Ace Paddle Rally" href="ace-paddle-rally.html">Play</a>
+  </section>
 
-  <div class="card">
+  <section class="card">
     <div class="badge">NEW</div>
     <div class="icon">🚀🌎</div>
     <h2>Space Rescue</h2>
-    <p>Fly your spaceship and complete exciting rescue missions!</p>
-    <a class="button space" href="ivy_ace_space_rescue.html">Play</a>
-  </div>
+    <p>Fly your spaceship and complete exciting rescue missions.</p>
+    <a class="button space game-link" data-game="Space Rescue" href="ivy_ace_space_rescue.html">Play</a>
+  </section>
 
-  <div class="card locked">
+  <section class="card">
+    <div class="icon">🐸🚗</div>
+    <h2>Frogger Adventure</h2>
+    <p>Hop across roads and rivers. Try not to get squished!</p>
+    <a class="button frogger game-link" data-game="Frogger Adventure" href="ivy-ace-frogger.html">Play</a>
+  </section>
+
+  <section class="card locked">
     <div class="icon">🦖</div>
     <h2>Dinosaur Adventure</h2>
-    <p>A prehistoric surprise is coming...</p>
+    <p>A prehistoric surprise is coming soon.</p>
     <span class="button">Coming Soon</span>
-  </div>
+  </section>
 
-  <div class="card locked">
+  <section class="card locked">
     <div class="icon">🧩</div>
     <h2>Puzzle Challenge</h2>
     <p>A brain teaser adventure is under construction.</p>
     <span class="button">Coming Soon</span>
-  </div>
+  </section>
 
-  <div class="card locked">
+  <section class="card locked">
+    <div class="icon">🎨</div>
+    <h2>Coloring Studio</h2>
+    <p>A creative drawing game will arrive later.</p>
+    <span class="button">Coming Soon</span>
+  </section>
+
+  <section class="card locked">
+    <div class="icon">🏎️</div>
+    <h2>Race Car Game</h2>
+    <p>A fast racing surprise is being built.</p>
+    <span class="button">Coming Soon</span>
+  </section>
+
+  <section class="card locked">
     <div class="icon">🎁</div>
     <h2>Mystery Game</h2>
-    <p>Papa has another surprise planned!</p>
+    <p>Papa has another surprise planned.</p>
     <span class="button">Coming Soon</span>
-  </div>
+  </section>
 
-</div>
+</main>
 
 <footer>
   ⭐ Keep checking back for new games! ⭐
 </footer>
 
-<a id="papaDot" href="#" title="Papa dashboard">●</a>
+<a id="papaDot" href="#" aria-label="Papa dashboard"></a>
 
 <div id="papaPanel">
   <h2>🔒 Papa Dashboard</h2>
-  <p>Total portal opens: <strong id="visitCount">Loading...</strong></p>
-  <p>Last opened on this device: <strong id="lastVisit">Loading...</strong></p>
-  <p style="font-size:13px;color:#777;">
-    For full “when and from where” analytics, add Cloudflare Web Analytics or Google Analytics.
+
+  <div class="stat"><span>Total portal opens</span><strong id="visitCount">Loading...</strong></div>
+  <div class="stat"><span>Last opened on this device</span><strong id="lastVisit">Loading...</strong></div>
+  <div class="stat"><span>Ivy Dress clicks</span><strong id="ivyCount">0</strong></div>
+  <div class="stat"><span>Ace Paddle clicks</span><strong id="aceCount">0</strong></div>
+  <div class="stat"><span>Space Rescue clicks</span><strong id="spaceCount">0</strong></div>
+  <div class="stat"><span>Frogger clicks</span><strong id="froggerCount">0</strong></div>
+
+  <p class="small-note">
+    This hidden dashboard uses a simple public counter for total opens and local device storage for game clicks.
+    For a real overview of when and from where, add Cloudflare Web Analytics or Google Analytics.
   </p>
-  <button onclick="closePapaPanel()">Close</button>
+
+  <button class="closeBtn" onclick="closePapaPanel()">Close</button>
+  <button class="resetBtn" onclick="resetLocalStats()">Reset local clicks</button>
 </div>
 
 <script>
-const counterKey = "ivy-ace-portal-main-page";
+const PAPA_PASSWORD = "papa2026";
+const COUNTER_NAMESPACE = "ivy-ace-games";
+const COUNTER_KEY = "portal-main-open";
 
-fetch("https://api.countapi.xyz/hit/ivy-ace-games/" + counterKey)
-  .then(res => res.json())
-  .then(data => {
-    localStorage.setItem("papaVisitCount", data.value);
-    localStorage.setItem("papaLastVisit", new Date().toLocaleString());
-  })
-  .catch(() => {
-    localStorage.setItem("papaVisitCount", "Unavailable");
-    localStorage.setItem("papaLastVisit", new Date().toLocaleString());
-  });
+const gameMap = {
+  "Ivy Dress to Impress": "ivyCount",
+  "Ace Paddle Rally": "aceCount",
+  "Space Rescue": "spaceCount",
+  "Frogger Adventure": "froggerCount"
+};
 
-document.getElementById("papaDot").addEventListener("click", function(e){
-  e.preventDefault();
+function nowText() {
+  return new Date().toLocaleString();
+}
 
-  const code = prompt("Papa code?");
-  if(code !== "papa2026"){
-    alert("No access");
-    return;
-  }
+function incrementPortalCounter() {
+  localStorage.setItem("papaLastVisit", nowText());
 
+  fetch("https://api.countapi.xyz/hit/" + COUNTER_NAMESPACE + "/" + COUNTER_KEY)
+    .then(response => response.json())
+    .then(data => {
+      localStorage.setItem("papaVisitCount", data.value);
+    })
+    .catch(() => {
+      localStorage.setItem("papaVisitCount", "Unavailable");
+    });
+}
+
+function getLocalNumber(key) {
+  return Number(localStorage.getItem(key) || "0");
+}
+
+function setLocalNumber(key, value) {
+  localStorage.setItem(key, String(value));
+}
+
+function trackGameClick(gameName) {
+  const key = gameMap[gameName];
+  if (!key) return;
+  setLocalNumber(key, getLocalNumber(key) + 1);
+  localStorage.setItem("lastGameClicked", gameName + " at " + nowText());
+}
+
+function fillPapaDashboard() {
   document.getElementById("visitCount").textContent =
     localStorage.getItem("papaVisitCount") || "Not loaded yet";
 
   document.getElementById("lastVisit").textContent =
     localStorage.getItem("papaLastVisit") || "Not loaded yet";
 
-  document.getElementById("papaPanel").style.display = "block";
-});
+  document.getElementById("ivyCount").textContent = getLocalNumber("ivyCount");
+  document.getElementById("aceCount").textContent = getLocalNumber("aceCount");
+  document.getElementById("spaceCount").textContent = getLocalNumber("spaceCount");
+  document.getElementById("froggerCount").textContent = getLocalNumber("froggerCount");
+}
 
-function closePapaPanel(){
+function openPapaPanel() {
+  const code = prompt("Papa code?");
+  if (code !== PAPA_PASSWORD) {
+    alert("No access");
+    return;
+  }
+
+  fillPapaDashboard();
+  document.getElementById("papaPanel").style.display = "block";
+}
+
+function closePapaPanel() {
   document.getElementById("papaPanel").style.display = "none";
 }
+
+function resetLocalStats() {
+  if (!confirm("Reset game click counts stored on this device?")) return;
+
+  ["ivyCount", "aceCount", "spaceCount", "froggerCount", "lastGameClicked"].forEach(key => {
+    localStorage.removeItem(key);
+  });
+
+  fillPapaDashboard();
+}
+
+document.querySelectorAll(".game-link").forEach(link => {
+  link.addEventListener("click", () => {
+    trackGameClick(link.dataset.game);
+  });
+});
+
+document.getElementById("papaDot").addEventListener("click", function(event) {
+  event.preventDefault();
+  openPapaPanel();
+});
+
+incrementPortalCounter();
 </script>
 
 </body>
