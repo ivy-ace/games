@@ -3,181 +3,236 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Ivy & Ace's Game Portal</title>
 
 <style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
 body{
-    margin:0;
-    font-family:Arial, Helvetica, sans-serif;
-    background:linear-gradient(180deg,#87CEEB,#FFF8DC);
-    text-align:center;
+  font-family:Arial,Helvetica,sans-serif;
+  background:linear-gradient(180deg,#7fd8ff,#fff8d7);
+  min-height:100vh;
 }
 
-header{
-    padding:35px 20px 15px;
-}
-
-h1{
-    font-size:3em;
-    margin-bottom:5px;
-}
-
-.subtitle{
-    font-size:1.2em;
-    color:#444;
-}
+header{text-align:center;padding:35px 20px;}
+h1{font-size:3rem;color:#2d3748;}
+.subtitle{margin-top:8px;font-size:1.2rem;color:#555;}
 
 .games{
-    display:flex;
-    justify-content:center;
-    flex-wrap:wrap;
-    gap:28px;
-    margin:35px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:28px;
+  max-width:1200px;
+  margin:20px auto 60px;
+  padding:20px;
 }
 
 .card{
-    width:300px;
-    min-height:260px;
-    background:white;
-    border-radius:25px;
-    padding:24px;
-    box-shadow:0 10px 25px rgba(0,0,0,.2);
-    transition:.25s;
+  background:white;
+  border-radius:24px;
+  padding:25px;
+  box-shadow:0 12px 30px rgba(0,0,0,.15);
+  transition:.25s;
+  text-align:center;
 }
 
-.card:hover{
-    transform:translateY(-8px);
-}
-
-.icon{
-    font-size:62px;
-}
-
-h2{
-    margin-top:12px;
-}
-
-p{
-    color:#444;
-}
+.card:hover{transform:translateY(-8px);}
+.icon{font-size:64px;}
+h2{margin:15px 0 10px;}
+p{color:#555;min-height:48px;}
 
 .button{
-    display:inline-block;
-    margin-top:18px;
-    padding:15px 26px;
-    border-radius:18px;
-    text-decoration:none;
-    color:white;
-    font-size:21px;
-    font-weight:bold;
+  display:inline-block;
+  margin-top:20px;
+  padding:14px 28px;
+  border-radius:18px;
+  text-decoration:none;
+  color:white;
+  font-weight:bold;
+  font-size:20px;
 }
 
-.ivy{
-    background:#ff66b2;
-}
-
-.ace{
-    background:#3b82f6;
-}
-
-.both{
-    background:#49b85f;
-}
+.ivy{background:#ff69b4;}
+.ace{background:#3b82f6;}
+.space{background:#6d28d9;}
 
 .locked{
-    background:#eeeeee;
-    color:#777;
-    border:3px dashed #bbb;
+  background:#efefef;
+  color:#888;
+  border:3px dashed #bbb;
 }
 
-.locked .icon{
-    opacity:.7;
-}
-
-.locked .button{
-    background:#aaa;
-    cursor:default;
-}
+.locked .button{background:#aaa;}
 
 .badge{
-    display:inline-block;
-    background:#ffdf3d;
-    color:#333;
-    padding:6px 12px;
-    border-radius:999px;
-    font-weight:bold;
-    margin-bottom:8px;
+  display:inline-block;
+  background:#FFD54F;
+  color:#333;
+  padding:5px 12px;
+  border-radius:999px;
+  font-weight:bold;
+  margin-bottom:10px;
 }
 
 footer{
-    margin:45px;
-    color:#666;
-    font-size:20px;
+  text-align:center;
+  color:#666;
+  padding:30px;
+  font-size:20px;
+}
+
+/* Hidden Papa counter */
+#papaDot{
+  position:fixed;
+  right:12px;
+  bottom:12px;
+  font-size:18px;
+  color:#39c76f;
+  text-decoration:none;
+  opacity:.45;
+  z-index:9999;
+}
+
+#papaDot:hover{opacity:1;}
+
+#papaPanel{
+  display:none;
+  position:fixed;
+  right:20px;
+  bottom:45px;
+  width:300px;
+  background:white;
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 10px 35px rgba(0,0,0,.25);
+  z-index:9998;
+  text-align:left;
+  font-family:Arial,sans-serif;
+}
+
+#papaPanel h2{margin-bottom:12px;}
+#papaPanel p{min-height:0;margin:8px 0;}
+
+#papaPanel button{
+  margin-top:12px;
+  padding:10px 16px;
+  border:0;
+  border-radius:10px;
+  background:#333;
+  color:white;
+  cursor:pointer;
 }
 </style>
-
 </head>
 
 <body>
 
 <header>
-    <h1>🎮 Ivy & Ace's Game Portal 🎮</h1>
-    <div class="subtitle">
-        Papa can add new games here anytime ❤️
-    </div>
+  <h1>🎮 Ivy & Ace's Game Portal 🎮</h1>
+  <div class="subtitle">
+    New games from <strong>Papa</strong> will appear here as surprises ❤️
+  </div>
 </header>
 
 <div class="games">
 
-    <div class="card">
-        <div class="icon">👗✨</div>
-        <h2>Ivy's Dress to Impress</h2>
-        <p>Create amazing outfits and impress the judges!</p>
-        <a class="button ivy" href="ivy-dress-to-impress.html">Play Now</a>
-    </div>
+  <div class="card">
+    <div class="icon">👗✨</div>
+    <h2>Ivy's Dress to Impress</h2>
+    <p>Create amazing outfits and impress the judges.</p>
+    <a class="button ivy" href="ivy-dress-to-impress.html">Play</a>
+  </div>
 
-    <div class="card">
-        <div class="icon">🏓</div>
-        <h2>Ace's Paddle Rally</h2>
-        <p>Can you beat the computer?</p>
-        <a class="button ace" href="ace-paddle-rally.html">Play Now</a>
-    </div>
+  <div class="card">
+    <div class="icon">🏓</div>
+    <h2>Ace's Paddle Rally</h2>
+    <p>Can you beat the computer?</p>
+    <a class="button ace" href="ace-paddle-rally.html">Play</a>
+  </div>
 
-    <div class="card">
-        <div class="badge">NEW</div>
-        <div class="icon">🐸🚗</div>
-        <h2>Frogger Adventure</h2>
-        <p>Hop across roads and rivers. Try not to get squished!</p>
-        <a class="button both" href="frogger.html">Play Now</a>
-    </div>
+  <div class="card">
+    <div class="badge">NEW</div>
+    <div class="icon">🚀🌎</div>
+    <h2>Space Rescue</h2>
+    <p>Fly your spaceship and complete exciting rescue missions!</p>
+    <a class="button space" href="ivy_ace_space_rescue.html">Play</a>
+  </div>
 
-    <div class="card locked">
-        <div class="icon">🎁</div>
-        <h2>Surprise Game</h2>
-        <p>A new game from Papa will appear here soon.</p>
-        <span class="button">Coming Soon</span>
-    </div>
+  <div class="card locked">
+    <div class="icon">🦖</div>
+    <h2>Dinosaur Adventure</h2>
+    <p>A prehistoric surprise is coming...</p>
+    <span class="button">Coming Soon</span>
+  </div>
 
-    <div class="card locked">
-        <div class="icon">🦖</div>
-        <h2>Dinosaur Game</h2>
-        <p>A dino adventure is still being built.</p>
-        <span class="button">Coming Soon</span>
-    </div>
+  <div class="card locked">
+    <div class="icon">🧩</div>
+    <h2>Puzzle Challenge</h2>
+    <p>A brain teaser adventure is under construction.</p>
+    <span class="button">Coming Soon</span>
+  </div>
 
-    <div class="card locked">
-        <div class="icon">🚀</div>
-        <h2>Space Game</h2>
-        <p>A space mission will launch here later.</p>
-        <span class="button">Coming Soon</span>
-    </div>
+  <div class="card locked">
+    <div class="icon">🎁</div>
+    <h2>Mystery Game</h2>
+    <p>Papa has another surprise planned!</p>
+    <span class="button">Coming Soon</span>
+  </div>
 
 </div>
 
 <footer>
-    ⭐ New surprise games coming soon! ⭐
+  ⭐ Keep checking back for new games! ⭐
 </footer>
+
+<a id="papaDot" href="#" title="Papa dashboard">●</a>
+
+<div id="papaPanel">
+  <h2>🔒 Papa Dashboard</h2>
+  <p>Total portal opens: <strong id="visitCount">Loading...</strong></p>
+  <p>Last opened on this device: <strong id="lastVisit">Loading...</strong></p>
+  <p style="font-size:13px;color:#777;">
+    For full “when and from where” analytics, add Cloudflare Web Analytics or Google Analytics.
+  </p>
+  <button onclick="closePapaPanel()">Close</button>
+</div>
+
+<script>
+const counterKey = "ivy-ace-portal-main-page";
+
+fetch("https://api.countapi.xyz/hit/ivy-ace-games/" + counterKey)
+  .then(res => res.json())
+  .then(data => {
+    localStorage.setItem("papaVisitCount", data.value);
+    localStorage.setItem("papaLastVisit", new Date().toLocaleString());
+  })
+  .catch(() => {
+    localStorage.setItem("papaVisitCount", "Unavailable");
+    localStorage.setItem("papaLastVisit", new Date().toLocaleString());
+  });
+
+document.getElementById("papaDot").addEventListener("click", function(e){
+  e.preventDefault();
+
+  const code = prompt("Papa code?");
+  if(code !== "papa2026"){
+    alert("No access");
+    return;
+  }
+
+  document.getElementById("visitCount").textContent =
+    localStorage.getItem("papaVisitCount") || "Not loaded yet";
+
+  document.getElementById("lastVisit").textContent =
+    localStorage.getItem("papaLastVisit") || "Not loaded yet";
+
+  document.getElementById("papaPanel").style.display = "block";
+});
+
+function closePapaPanel(){
+  document.getElementById("papaPanel").style.display = "none";
+}
+</script>
 
 </body>
 </html>
