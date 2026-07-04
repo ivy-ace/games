@@ -75,6 +75,37 @@
     min-width: 146px;
     flex: 0 0 auto;
   }
+  .level-badge {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 7px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    backdrop-filter: blur(8px);
+    min-width: 156px;
+  }
+  .level-badge span {
+    color: var(--muted);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .level-badge strong {
+    color: var(--ace);
+    font-size: clamp(22px, 4vw, 34px);
+    line-height: .95;
+    grid-row: span 2;
+  }
+  .level-badge em {
+    color: var(--text);
+    font-style: normal;
+    font-size: 12px;
+    white-space: nowrap;
+  }
   .score {
     font-size: clamp(21px, 4.2vw, 34px);
     font-weight: 800;
@@ -184,6 +215,8 @@
     .app { gap: 5px; padding-left: 6px; padding-right: 6px; }
     header { align-items: flex-start; }
     .subtitle { display: none; }
+    .level-badge { min-width: 118px; padding: 5px 8px; }
+    .level-badge em { display: none; }
     .scoreboard { min-width: 118px; padding: 5px 8px; }
     .hint { display: none; }
     .mobile-pad { display: flex; }
@@ -196,6 +229,9 @@
     .subtitle, .hint { display: none; }
     h1 { font-size: clamp(16px, 2.4vw, 22px); }
     .scoreboard { padding: 4px 8px; min-width: 122px; }
+    .level-badge { padding: 4px 8px; min-width: 112px; }
+    .level-badge strong { font-size: clamp(20px, 3.8vw, 28px); }
+    .level-badge em { display: none; }
     .score { font-size: clamp(20px, 3.8vw, 28px); }
     .tag { font-size: 9px; }
     button { padding: 6px 8px; font-size: 12px; }
@@ -228,7 +264,12 @@
     <header>
       <div>
         <h1>Ace Paddle Rally</h1>
-        <div class="subtitle">Move Ace's paddle and bounce the comet past the bot.</div>
+        <div class="subtitle">Clear each color level twice with bumpers, moving gates, and breakable blocks.</div>
+      </div>
+      <div class="level-badge" aria-label="Current level">
+        <strong id="levelNumber">1</strong>
+        <span>Level</span>
+        <em id="levelName">Neon Start</em>
       </div>
       <div class="scoreboard" aria-label="Score">
         <div>
@@ -247,7 +288,7 @@
       <div id="message" class="message">
         <div class="message-card">
           <h2>Ready, Ace?</h2>
-          <p>Use arrow keys, W/S, mouse, or touch. First to 7 wins.</p>
+          <p>Score twice on each level to unlock the next one. Break glowing blocks and dodge moving gates.</p>
         </div>
       </div>
     </section>
@@ -273,22 +314,183 @@
   const msg = document.getElementById("message");
   const aceScoreEl = document.getElementById("aceScore");
   const botScoreEl = document.getElementById("botScore");
+  const levelNumberEl = document.getElementById("levelNumber");
+  const levelNameEl = document.getElementById("levelName");
   const startBtn = document.getElementById("startBtn");
   const pauseBtn = document.getElementById("pauseBtn");
   const easyBtn = document.getElementById("easyBtn");
   const normalBtn = document.getElementById("normalBtn");
   const upBtn = document.getElementById("upBtn");
   const downBtn = document.getElementById("downBtn");
+
+  const LEVELS = [
+    { name: "Neon Start", bg1: "#102b63", bg2: "#081227", ace: "#44e0ff", bot: "#ffcf4a", ball: "#ffffff" },
+    { name: "Sun Bumpers", bg1: "#8a4108", bg2: "#28110a", ace: "#ffd166", bot: "#62e7ff", ball: "#fff7d6" },
+    { name: "Candy Blocks", bg1: "#6b1e66", bg2: "#190d33", ace: "#ff8bd1", bot: "#8cffc1", ball: "#ffffff" },
+    { name: "Forest Gates", bg1: "#0f5132", bg2: "#071b12", ace: "#7dff8a", bot: "#ffd166", ball: "#f1ffe8" },
+    { name: "Ice Drifters", bg1: "#145f78", bg2: "#081b2b", ace: "#9be7ff", bot: "#ffffff", ball: "#e9fbff" },
+    { name: "Volcano Rocks", bg1: "#7a1717", bg2: "#21080a", ace: "#ff7043", bot: "#ffd54f", ball: "#fff2df" },
+    { name: "Ocean Tides", bg1: "#075c76", bg2: "#08142f", ace: "#00e5ff", bot: "#b2ff59", ball: "#effcff" },
+    { name: "City Traffic", bg1: "#353267", bg2: "#111222", ace: "#b388ff", bot: "#ffca28", ball: "#ffffff" },
+    { name: "Laser Maze", bg1: "#64113f", bg2: "#17051d", ace: "#ff4fd8", bot: "#55ffdd", ball: "#fff0fb" },
+    { name: "Rainbow Finale", bg1: "#263a8b", bg2: "#130c35", ace: "#7affc6", bot: "#ffcf4a", ball: "#ffffff" }
+  ];
+
   const state = {
-    w: 800, h: 500, running: false, paused: false, last: 0,
-    goal: 7, difficulty: "easy", aceScore: 0, botScore: 0,
-    keys: new Set(), pointerActive: false, pointerY: 0,
-    particles: [], stars: [], shake: 0, audio: null
+    w: 800,
+    h: 500,
+    running: false,
+    paused: false,
+    last: 0,
+    roundsPerLevel: 2,
+    goal: 20,
+    difficulty: "easy",
+    levelIndex: 0,
+    aceScore: 0,
+    botScore: 0,
+    keys: new Set(),
+    pointerActive: false,
+    pointerY: 0,
+    particles: [],
+    stars: [],
+    obstacles: [],
+    destroyedIds: new Set(),
+    shake: 0,
+    audio: null,
+    flashTimer: null
   };
+
   const player = { x: 26, y: 200, w: 18, h: 112, speed: 620, targetY: 200 };
   const bot = { x: 756, y: 200, w: 18, h: 108, speed: 390 };
   const ball = { x: 400, y: 250, r: 11, vx: 360, vy: 130, speed: 390 };
+
   function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+  function level() { return LEVELS[state.levelIndex]; }
+  function levelRun() { return state.aceScore % state.roundsPerLevel; }
+  function levelRunLabel() { return (levelRun() + 1) + "/" + state.roundsPerLevel; }
+  function scaleX(n) { return n * state.w; }
+  function scaleY(n) { return n * state.h; }
+  function scaleS(n) { return n * Math.min(state.w, state.h); }
+
+  function rect(id, x, y, w, h, color, breakable, moving) {
+    return { id, type: "rect", bx: x, by: y, bw: w, bh: h, color, breakable: !!breakable, moving };
+  }
+
+  function circle(id, x, y, r, color, breakable, moving) {
+    return { id, type: "circle", bx: x, by: y, br: r, color, breakable: !!breakable, moving };
+  }
+
+  function obstacleSpecs(index) {
+    const a = level().ace;
+    const b = level().bot;
+    const white = "rgba(255,255,255,.92)";
+    switch (index) {
+      case 0:
+        return [];
+      case 1:
+        return [
+          circle("sun-1", .50, .35, .040, a, false),
+          circle("sun-2", .50, .65, .040, b, false)
+        ];
+      case 2:
+        return [
+          rect("candy-1", .47, .25, .065, .105, a, true),
+          rect("candy-2", .47, .45, .065, .105, b, true),
+          rect("candy-3", .47, .65, .065, .105, a, true)
+        ];
+      case 3:
+        return [
+          rect("forest-top", .49, .12, .035, .30, a, false),
+          rect("forest-bottom", .49, .58, .035, .30, b, false),
+          circle("forest-seed", .60, .50, .032, white, true)
+        ];
+      case 4:
+        return [
+          rect("ice-1", .42, .28, .030, .25, a, false, { axis: "y", amp: .14, speed: 1.0, phase: 0 }),
+          rect("ice-2", .58, .48, .030, .25, b, false, { axis: "y", amp: .14, speed: 1.15, phase: 2.2 }),
+          circle("ice-chip", .50, .50, .030, white, true)
+        ];
+      case 5:
+        return [
+          circle("rock-1", .43, .28, .044, b, false),
+          circle("rock-2", .56, .72, .044, b, false),
+          rect("lava-1", .49, .38, .060, .070, a, true),
+          rect("lava-2", .49, .55, .060, .070, a, true)
+        ];
+      case 6:
+        return [
+          circle("tide-1", .44, .34, .038, a, false, { axis: "x", amp: .09, speed: 1.0, phase: 0 }),
+          circle("tide-2", .56, .66, .038, b, false, { axis: "x", amp: .09, speed: 1.1, phase: 2.7 }),
+          rect("shell-1", .49, .48, .055, .070, white, true)
+        ];
+      case 7:
+        return [
+          rect("car-1", .38, .23, .120, .060, b, false, { axis: "x", amp: .12, speed: 1.10, phase: 0 }),
+          rect("car-2", .50, .48, .120, .060, a, false, { axis: "x", amp: .12, speed: 1.25, phase: 2.0 }),
+          rect("car-3", .42, .72, .120, .060, b, false, { axis: "x", amp: .12, speed: 1.05, phase: 4.0 })
+        ];
+      case 8:
+        return [
+          rect("laser-top", .40, .15, .030, .31, a, false),
+          rect("laser-mid", .57, .34, .030, .31, b, false),
+          rect("laser-bottom", .46, .68, .030, .20, a, false),
+          rect("laser-break-1", .50, .24, .060, .070, white, true),
+          rect("laser-break-2", .50, .76, .060, .070, white, true)
+        ];
+      default:
+        return [
+          circle("final-orb-1", .38, .30, .035, a, false, { axis: "y", amp: .16, speed: 1.20, phase: 0 }),
+          circle("final-orb-2", .62, .70, .035, b, false, { axis: "y", amp: .16, speed: 1.35, phase: 1.8 }),
+          rect("final-gate-1", .49, .18, .032, .22, a, false, { axis: "x", amp: .06, speed: 1.0, phase: 1.2 }),
+          rect("final-gate-2", .49, .60, .032, .22, b, false, { axis: "x", amp: .06, speed: 1.0, phase: 3.2 }),
+          rect("final-break-1", .45, .47, .055, .070, white, true),
+          rect("final-break-2", .56, .47, .055, .070, white, true)
+        ];
+    }
+  }
+
+  function layoutObstacle(o, t) {
+    const phase = o.moving ? Math.sin(t * o.moving.speed + o.moving.phase) : 0;
+    const dx = o.moving && o.moving.axis === "x" ? scaleX(o.moving.amp) * phase : 0;
+    const dy = o.moving && o.moving.axis === "y" ? scaleY(o.moving.amp) * phase : 0;
+    if (o.type === "circle") {
+      o.x = scaleX(o.bx) + dx;
+      o.y = scaleY(o.by) + dy;
+      o.r = clamp(scaleS(o.br), 10, 28);
+    } else {
+      o.w = clamp(scaleX(o.bw), 18, 96);
+      o.h = clamp(scaleY(o.bh), 24, 150);
+      o.x = scaleX(o.bx) - o.w / 2 + dx;
+      o.y = scaleY(o.by) - o.h / 2 + dy;
+    }
+  }
+
+  function buildObstacles() {
+    state.obstacles = obstacleSpecs(state.levelIndex).map(o => {
+      o.destroyed = state.destroyedIds.has(o.id);
+      layoutObstacle(o, performance.now() / 1000);
+      return o;
+    });
+  }
+
+  function setLevel(index, announce) {
+    state.levelIndex = clamp(index, 0, LEVELS.length - 1);
+    state.destroyedIds.clear();
+    buildObstacles();
+    updateLevelUI();
+    if (announce) flashLevel();
+  }
+
+  function updateLevelUI() {
+    const l = level();
+    levelNumberEl.textContent = String(state.levelIndex + 1);
+    levelNameEl.textContent = l.name + " · " + levelRunLabel();
+    document.documentElement.style.setProperty("--bg1", l.bg1);
+    document.documentElement.style.setProperty("--bg2", l.bg2);
+    document.documentElement.style.setProperty("--ace", l.ace);
+    document.documentElement.style.setProperty("--bot", l.bot);
+  }
+
   function resize() {
     const rect = stage.getBoundingClientRect();
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -299,32 +501,37 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     state.w = rect.width;
     state.h = rect.height;
-    player.h = clamp(state.h * 0.23, 86, 130);
-    bot.h = state.difficulty === "easy" ? player.h * 0.86 : player.h * 0.96;
+    player.h = clamp(state.h * 0.23, 82, 126);
+    bot.h = state.difficulty === "easy" ? player.h * 0.84 : player.h * 0.96;
     player.x = clamp(state.w * 0.035, 20, 38);
     bot.x = state.w - player.x - bot.w;
     player.y = clamp(player.y, 8, state.h - player.h - 8);
     bot.y = clamp(bot.y, 8, state.h - bot.h - 8);
+    buildObstacles();
   }
+
   function initStars() {
     state.stars = [];
-    for (let i = 0; i < 42; i++) {
+    for (let i = 0; i < 46; i++) {
       state.stars.push({ x: Math.random(), y: Math.random(), r: Math.random() * 1.8 + .4, twinkle: Math.random() * Math.PI * 2 });
     }
   }
+
   function resetBall(direction) {
     ball.x = state.w / 2;
     ball.y = state.h / 2;
-    ball.speed = state.difficulty === "easy" ? 340 : 420;
-    const angle = Math.random() * .7 - .35;
+    ball.speed = state.difficulty === "easy" ? 320 + state.levelIndex * 10 : 390 + state.levelIndex * 16;
+    const angle = Math.random() * .64 - .32;
     ball.vx = Math.cos(angle) * ball.speed * direction;
     ball.vy = Math.sin(angle) * ball.speed;
   }
+
   function newGame() {
     state.aceScore = 0;
     state.botScore = 0;
     aceScoreEl.textContent = "0";
     botScoreEl.textContent = "0";
+    setLevel(0, false);
     player.y = state.h / 2 - player.h / 2;
     bot.y = state.h / 2 - bot.h / 2;
     resetBall(Math.random() > .5 ? 1 : -1);
@@ -338,10 +545,12 @@
     beep(420, .045, .04);
     requestAnimationFrame(loop);
   }
+
   function ensureAudio() {
     if (state.audio) return;
     try { state.audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { state.audio = null; }
   }
+
   function beep(freq, seconds, gain) {
     if (!state.audio) return;
     const now = state.audio.currentTime;
@@ -357,34 +566,60 @@
     osc.start(now);
     osc.stop(now + seconds + .02);
   }
+
+  function flashLevel() {
+    clearTimeout(state.flashTimer);
+    const l = level();
+    msg.querySelector(".message-card").innerHTML = "<h2>Level " + (state.levelIndex + 1) + "</h2><p>" + l.name + " · Run " + levelRunLabel() + "</p>";
+    msg.style.display = "grid";
+    state.flashTimer = setTimeout(() => {
+      if (state.running && !state.paused) msg.style.display = "none";
+    }, 850);
+  }
+
   function point(who) {
     if (who === "ace") {
       state.aceScore++;
       aceScoreEl.textContent = state.aceScore;
-      burst(state.w * .75, state.h / 2, "#44e0ff", 22);
+      burst(state.w * .76, state.h / 2, level().ace, 24);
       beep(660, .08, .055);
       beep(880, .09, .04);
+      if (state.aceScore >= state.goal) {
+        endGame(true);
+        return;
+      }
+      const nextLevel = Math.floor(state.aceScore / state.roundsPerLevel);
+      setLevel(nextLevel, true);
       resetBall(-1);
     } else {
       state.botScore++;
       botScoreEl.textContent = state.botScore;
-      burst(state.w * .25, state.h / 2, "#ffcf4a", 16);
+      burst(state.w * .24, state.h / 2, level().bot, 16);
       beep(180, .12, .045);
+      if (state.botScore >= state.goal) {
+        endGame(false);
+        return;
+      }
+      updateLevelUI();
       resetBall(1);
     }
     state.shake = 9;
-    if (state.aceScore >= state.goal || state.botScore >= state.goal) endGame(state.aceScore >= state.goal);
   }
+
   function endGame(aceWon) {
     state.running = false;
+    clearTimeout(state.flashTimer);
     msg.querySelector(".message-card").innerHTML = aceWon
-      ? "<h2>Ace wins!</h2><p>Brilliant rally. Press Restart to play again.</p>"
-      : "<h2>Nice try!</h2><p>The bot got this round. Press Restart for a comeback.</p>";
+      ? "<h2>Ace cleared all 10 levels!</h2><p>Final score: Ace " + state.aceScore + ", Bot " + state.botScore + ". Press Restart to play again.</p>"
+      : "<h2>Bot wins this run</h2><p>Ace reached Level " + (state.levelIndex + 1) + ". Press Restart for another try.</p>";
     msg.style.display = "grid";
     if (aceWon) {
-      for (let i = 0; i < 7; i++) setTimeout(() => burst(Math.random() * state.w, Math.random() * state.h * .7, i % 2 ? "#44e0ff" : "#ffcf4a", 28), i * 120);
+      for (let i = 0; i < 9; i++) {
+        setTimeout(() => burst(Math.random() * state.w, Math.random() * state.h * .75, LEVELS[i % LEVELS.length].ace, 28), i * 110);
+      }
     }
   }
+
   function burst(x, y, color, count) {
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
@@ -392,20 +627,24 @@
       state.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: Math.random() * .35 + .28, max: .7, color, r: Math.random() * 4 + 2 });
     }
   }
+
   function loop(now) {
     const dt = Math.min(.024, (now - state.last) / 1000 || 0);
     state.last = now;
-    if (state.running && !state.paused) update(dt);
+    if (state.running && !state.paused) update(dt, now / 1000);
     draw(now / 1000);
     if (state.running) requestAnimationFrame(loop);
   }
-  function update(dt) {
+
+  function update(dt, t) {
     updatePlayer(dt);
     updateBot(dt);
+    for (const o of state.obstacles) layoutObstacle(o, t);
     updateBall(dt);
     updateParticles(dt);
     state.shake = Math.max(0, state.shake - 40 * dt);
   }
+
   function updatePlayer(dt) {
     let dir = 0;
     if (state.keys.has("ArrowUp") || state.keys.has("w")) dir -= 1;
@@ -417,15 +656,17 @@
     if (dir !== 0) player.y += dir * player.speed * dt;
     player.y = clamp(player.y, 8, state.h - player.h - 8);
   }
+
   function updateBot(dt) {
-    const reaction = state.difficulty === "easy" ? 0.58 : 0.82;
+    const reaction = state.difficulty === "easy" ? 0.54 : 0.80;
     const botCenter = bot.y + bot.h / 2;
     const predicted = ball.y + ball.vy * ((bot.x - ball.x) / Math.max(80, Math.abs(ball.vx)));
     const target = ball.vx > 0 ? predicted : state.h / 2;
-    const miss = state.difficulty === "easy" ? Math.sin(performance.now() / 500) * 34 : Math.sin(performance.now() / 700) * 18;
+    const miss = state.difficulty === "easy" ? Math.sin(performance.now() / 500) * 42 : Math.sin(performance.now() / 700) * 22;
     const diff = target + miss - botCenter;
     bot.y = clamp(bot.y + clamp(diff * reaction, -bot.speed, bot.speed) * dt, 8, state.h - bot.h - 8);
   }
+
   function updateBall(dt) {
     ball.x += ball.vx * dt;
     ball.y += ball.vy * dt;
@@ -439,23 +680,98 @@
       ball.vy = -Math.abs(ball.vy);
       beep(300, .035, .025);
     }
-    checkPaddle(player, 1, "#44e0ff");
-    checkPaddle(bot, -1, "#ffcf4a");
+    checkObstacles();
+    checkPaddle(player, 1, level().ace);
+    checkPaddle(bot, -1, level().bot);
     if (ball.x < -40) point("bot");
     if (ball.x > state.w + 40) point("ace");
   }
+
   function checkPaddle(paddle, direction, color) {
     const hit = ball.x - ball.r < paddle.x + paddle.w && ball.x + ball.r > paddle.x && ball.y + ball.r > paddle.y && ball.y - ball.r < paddle.y + paddle.h;
     if (!hit) return;
     const offset = (ball.y - (paddle.y + paddle.h / 2)) / (paddle.h / 2);
     const angle = offset * Math.PI * .34;
-    ball.speed = Math.min(ball.speed + 18, state.difficulty === "easy" ? 560 : 690);
+    const maxSpeed = state.difficulty === "easy" ? 555 + state.levelIndex * 8 : 690 + state.levelIndex * 14;
+    ball.speed = Math.min(ball.speed + 18, maxSpeed);
     ball.vx = Math.cos(angle) * ball.speed * direction;
     ball.vy = Math.sin(angle) * ball.speed;
     ball.x = direction > 0 ? paddle.x + paddle.w + ball.r + 1 : paddle.x - ball.r - 1;
     burst(ball.x, ball.y, color, 8);
     beep(direction > 0 ? 520 : 430, .04, .035);
   }
+
+  function checkObstacles() {
+    for (const o of state.obstacles) {
+      if (o.destroyed) continue;
+      const hit = o.type === "circle" ? collideCircle(o) : collideRect(o);
+      if (hit) {
+        if (o.breakable) {
+          o.destroyed = true;
+          state.destroyedIds.add(o.id);
+          burst(ball.x, ball.y, o.color, 18);
+          beep(760, .055, .045);
+        } else {
+          burst(ball.x, ball.y, o.color, 7);
+          beep(250 + state.levelIndex * 35, .035, .03);
+        }
+        ball.speed = Math.min(Math.hypot(ball.vx, ball.vy) + 6, state.difficulty === "easy" ? 620 : 780);
+        return;
+      }
+    }
+  }
+
+  function reflect(nx, ny) {
+    const dot = ball.vx * nx + ball.vy * ny;
+    if (dot < 0) {
+      ball.vx -= 2 * dot * nx;
+      ball.vy -= 2 * dot * ny;
+    } else {
+      ball.vx *= -1;
+    }
+  }
+
+  function collideCircle(o) {
+    const dx = ball.x - o.x;
+    const dy = ball.y - o.y;
+    const dist = Math.hypot(dx, dy);
+    const minDist = ball.r + o.r;
+    if (dist >= minDist || dist === 0) return false;
+    const nx = dx / dist;
+    const ny = dy / dist;
+    ball.x += nx * (minDist - dist + 1);
+    ball.y += ny * (minDist - dist + 1);
+    reflect(nx, ny);
+    return true;
+  }
+
+  function collideRect(o) {
+    const nearestX = clamp(ball.x, o.x, o.x + o.w);
+    const nearestY = clamp(ball.y, o.y, o.y + o.h);
+    let dx = ball.x - nearestX;
+    let dy = ball.y - nearestY;
+    let dist = Math.hypot(dx, dy);
+    if (dist >= ball.r) return false;
+    if (dist === 0) {
+      const left = Math.abs(ball.x - o.x);
+      const right = Math.abs(o.x + o.w - ball.x);
+      const top = Math.abs(ball.y - o.y);
+      const bottom = Math.abs(o.y + o.h - ball.y);
+      const min = Math.min(left, right, top, bottom);
+      if (min === left) { dx = -1; dy = 0; }
+      else if (min === right) { dx = 1; dy = 0; }
+      else if (min === top) { dx = 0; dy = -1; }
+      else { dx = 0; dy = 1; }
+      dist = 1;
+    }
+    const nx = dx / dist;
+    const ny = dy / dist;
+    ball.x += nx * (ball.r - dist + 1);
+    ball.y += ny * (ball.r - dist + 1);
+    reflect(nx, ny);
+    return true;
+  }
+
   function updateParticles(dt) {
     for (const p of state.particles) {
       p.x += p.vx * dt;
@@ -465,6 +781,7 @@
     }
     state.particles = state.particles.filter(p => p.life > 0);
   }
+
   function draw(t) {
     const sx = state.shake ? (Math.random() - .5) * state.shake : 0;
     const sy = state.shake ? (Math.random() - .5) * state.shake : 0;
@@ -473,17 +790,21 @@
     ctx.translate(sx, sy);
     drawBackground(t);
     drawCenterLine();
-    drawPaddle(player, "#44e0ff", "ACE");
-    drawPaddle(bot, "#ffcf4a", "BOT");
+    drawLevelWatermark();
+    drawObstacles(t);
+    drawPaddle(player, level().ace, "ACE");
+    drawPaddle(bot, level().bot, "BOT");
     drawBall(t);
     drawParticles();
     ctx.restore();
   }
+
   function drawBackground(t) {
+    const l = level();
     const g = ctx.createLinearGradient(0, 0, state.w, state.h);
-    g.addColorStop(0, "#102b63");
-    g.addColorStop(.55, "#0b1a3e");
-    g.addColorStop(1, "#081227");
+    g.addColorStop(0, l.bg1);
+    g.addColorStop(.58, "#0b1736");
+    g.addColorStop(1, l.bg2);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, state.w, state.h);
     ctx.fillStyle = "rgba(255,255,255,.72)";
@@ -495,6 +816,7 @@
     }
     ctx.globalAlpha = 1;
   }
+
   function drawCenterLine() {
     ctx.strokeStyle = "rgba(255,255,255,.22)";
     ctx.lineWidth = 3;
@@ -510,6 +832,63 @@
     ctx.arc(state.w / 2, state.h / 2, Math.min(state.w, state.h) * .14, 0, Math.PI * 2);
     ctx.stroke();
   }
+
+  function drawLevelWatermark() {
+    ctx.save();
+    ctx.globalAlpha = .12;
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 " + clamp(state.h * .12, 36, 82) + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("LEVEL " + (state.levelIndex + 1), state.w / 2, state.h / 2);
+    ctx.restore();
+  }
+
+  function drawObstacles(t) {
+    for (const o of state.obstacles) {
+      if (o.destroyed) continue;
+      ctx.save();
+      ctx.shadowColor = o.color;
+      ctx.shadowBlur = o.breakable ? 16 : 12;
+      ctx.globalAlpha = o.breakable ? .95 : .82;
+      ctx.fillStyle = o.color;
+      ctx.strokeStyle = "rgba(255,255,255,.72)";
+      ctx.lineWidth = 2;
+      if (o.type === "circle") {
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        if (o.breakable) drawCrack(o.x, o.y, o.r, t);
+      } else {
+        roundRect(o.x, o.y, o.w, o.h, 7);
+        ctx.fill();
+        ctx.stroke();
+        if (o.breakable) {
+          ctx.fillStyle = "rgba(6,15,38,.62)";
+          ctx.font = "800 " + clamp(o.h * .36, 12, 20) + "px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("HIT", o.x + o.w / 2, o.y + o.h / 2);
+        }
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawCrack(x, y, r, t) {
+    ctx.save();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(6,15,38,.65)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x - r * .25, y - r * .45);
+    ctx.lineTo(x + Math.sin(t * 4) * r * .1, y);
+    ctx.lineTo(x + r * .32, y + r * .42);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawPaddle(p, color, label) {
     ctx.shadowColor = color;
     ctx.shadowBlur = 18;
@@ -527,28 +906,31 @@
     ctx.fillText(label, 0, 0);
     ctx.restore();
   }
+
   function drawBall(t) {
+    const l = level();
     const trail = ctx.createRadialGradient(ball.x, ball.y, 2, ball.x, ball.y, 38);
     trail.addColorStop(0, "rgba(255,255,255,.95)");
-    trail.addColorStop(.25, "rgba(255,255,255,.72)");
+    trail.addColorStop(.25, l.ace + "bb");
     trail.addColorStop(1, "rgba(68,224,255,0)");
     ctx.fillStyle = trail;
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, 38, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowColor = "#ffffff";
+    ctx.shadowColor = l.ball;
     ctx.shadowBlur = 18;
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = l.ball;
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = "#44e0ff";
+    ctx.strokeStyle = l.ace;
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.r + 3 + Math.sin(t * 10) * 1.5, 0, Math.PI * 2);
     ctx.stroke();
   }
+
   function drawParticles() {
     for (const p of state.particles) {
       ctx.globalAlpha = clamp(p.life / p.max, 0, 1);
@@ -559,6 +941,7 @@
     }
     ctx.globalAlpha = 1;
   }
+
   function roundRect(x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -568,6 +951,7 @@
     ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
   }
+
   function setDifficulty(mode) {
     state.difficulty = mode;
     easyBtn.classList.toggle("active", mode === "easy");
@@ -575,6 +959,7 @@
     resize();
     resetBall(ball.vx >= 0 ? 1 : -1);
   }
+
   startBtn.addEventListener("click", newGame);
   pauseBtn.addEventListener("click", () => {
     if (!state.running) return;
@@ -589,6 +974,7 @@
   });
   easyBtn.addEventListener("click", () => setDifficulty("easy"));
   normalBtn.addEventListener("click", () => setDifficulty("normal"));
+
   window.addEventListener("keydown", e => {
     if (["ArrowUp", "ArrowDown", "w", "s", "W", "S", " "].includes(e.key)) e.preventDefault();
     if (e.key === " ") {
@@ -599,10 +985,12 @@
     state.keys.add(e.key.length === 1 ? e.key.toLowerCase() : e.key);
   });
   window.addEventListener("keyup", e => state.keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
+
   function pointerToY(e) {
     const rect = canvas.getBoundingClientRect();
     return clamp(e.clientY - rect.top, 0, rect.height);
   }
+
   stage.addEventListener("pointerdown", e => {
     ensureAudio();
     state.pointerActive = true;
@@ -617,6 +1005,7 @@
     state.pointerActive = false;
     try { stage.releasePointerCapture(e.pointerId); } catch (_) {}
   });
+
   function holdButton(button, key) {
     const down = e => {
       e.preventDefault();
@@ -633,10 +1022,12 @@
     button.addEventListener("pointercancel", up);
     button.addEventListener("pointerleave", up);
   }
+
   holdButton(upBtn, "ArrowUp");
   holdButton(downBtn, "ArrowDown");
   window.addEventListener("resize", resize);
   initStars();
+  setLevel(0, false);
   resize();
   resetBall(1);
   draw(0);
